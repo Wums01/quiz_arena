@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Arena - Multiplayer</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top, #1d3557 0%, #0b132b 45%, #050814 100%);
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0;
+        }
+
+        .multi-card {
+            width: 100%;
+            max-width: 760px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 38px 24px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+            text-align: center;
+        }
+
+        .title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 28px;
+        }
+
+        .action-btn {
+            border-radius: 16px;
+            padding: 16px 24px;
+            font-weight: 700;
+            width: 100%;
+            text-decoration: none;
+            display: inline-block;
+            transition: 0.25s ease;
+        }
+
+        .create-btn {
+            background: #f4b400;
+            color: #111;
+            border: none;
+        }
+
+        .create-btn:hover {
+            background: #ffd24d;
+            color: #111;
+            transform: translateY(-2px);
+        }
+
+        .join-btn {
+            border: 2px solid rgba(255,255,255,0.5);
+            color: white;
+            background: transparent;
+        }
+
+        .join-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.85;
+            display: inline-block;
+            margin-bottom: 18px;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="multi-card mx-auto">
+            <a href="/" class="back-link">← Back Home</a>
+            <h1 class="title">Multiplayer Mode</h1>
+            <p class="subtitle">Create a room or join a room and play with friends in real time.</p>
+
+            <div class="d-grid gap-3">
+                <a href="/multiplayer/create/" class="action-btn create-btn">Create Room</a>
+                <a href="/multiplayer/join/" class="action-btn join-btn">Join Room</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

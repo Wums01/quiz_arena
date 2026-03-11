@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiplayer Question</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background: radial-gradient(circle at top,#1d3557 0%,#0b132b 45%,#050814 100%);
+    min-height:100vh;
+    color:white;
+}
+.page-wrap{padding:30px;}
+.game-card{
+    max-width:1100px;
+    margin:auto;
+    background:rgba(255,255,255,0.05);
+    border-radius:25px;
+    padding:30px;
+}
+.game-body{
+    display:flex;
+    gap:25px;
+}
+.left-panel{flex:3;}
+.right-panel{flex:1;}
+.progress{
+    height:10px;
+    background:#2b335a;
+    border-radius:10px;
+    margin:10px 0 25px 0;
+}
+.progress-bar{
+    height:100%;
+    background:#f4b400;
+    border-radius:10px;
+}
+.question-box{
+    background:rgba(255,255,255,0.07);
+    padding:25px;
+    border-radius:15px;
+    margin-bottom:25px;
+}
+.question-text{
+    font-size:1.3rem;
+    font-weight:600;
+}
+.answers-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+.answer-card{
+    background:rgba(255,255,255,0.08);
+    border:none;
+    padding:18px;
+    border-radius:14px;
+    color:white;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    cursor:pointer;
+    transition:0.2s;
+}
+.answer-card:hover{
+    background:rgba(255,255,255,0.14);
+}
+.answer-badge{
+    background:#f4b400;
+    color:black;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+}
+.correct{
+    background:#2ecc71 !important;
+}
+.wrong{
+    background:#e74c3c !important;
+}
+.timer{
+    font-size:24px;
+    font-weight:bold;
+    margin-bottom:15px;
+}
+.leaderboard{
+    background:rgba(255,255,255,0.06);
+    padding:18px;
+    border-radius:15px;
+}
+.player-row{
+    display:flex;
+    justify-content:space-between;
+    padding:6px 0;
+}
+.waiting-note{
+    margin-top:20px;
+    opacity:0.8;
+}
+.feedback-note{
+    margin-top:15px;
+    min-height:24px;
+}
+@media (max-width:900px){
+    .game-body{
+        flex-direction:column;
+    }
+}
+@media (max-width:768px){
+    .answers-grid{
+        grid-template-columns:1fr;
+    }
+    .page-wrap{
+        padding:18px;
+    }
+    .game-card{
+        padding:20px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+<div class="game-card">
+
+<p>Your Score: <span id="playerScore">{{ player_score }}</span></p>
+<p>Question {{ current_number }} of {{ total_questions }}</p>
+
+<div class="progress">
+    <div class="progress-bar" style="width:{% widthratio current_number total_questions 100 %}%"></div>
+</div>
+
+<div class="game-body">
+    <div class="left-panel">
+        {% if question %}
+            <div class="question-box">
+                <p class="question-text">{{ question.text }}</p>
+            </div>
+
+            <div class="answers-grid">
+                <button class="answer-card" data-option="1">
+                    <div class="answer-badge">A</div>
+                    <div>{{ question.option1 }}</div>
+                </button>
+
+                <button class="answer-card" data-option="2">
+                    <div class="answer-badge">B</div>
+                    <div>{{ question.option2 }}</div>
+                </button>
+
+                <button class="answer-card" data-option="3">
+                    <div class="answer-badge">C</div>
+                    <div>{{ question.option3 }}</div>
+                </button>
+
+                <button class="answer-card" data-option="4">
+                    <div class="answer-badge">D</div>
+                    <div>{{ question.option4 }}</div>
+                </button>
+            </div>
+
+            <div class="feedback-note" id="feedbackNote"></div>
+
+            <p class="waiting-note">
+                {% if is_host %}
+                    You are controlling the room timer.
+                {% else %}
+                    Waiting for the next question...
+                {% endif %}
+            </p>
+        {% else %}
+            <div class="question-box">
+                <p>No questions found for this category.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="right-panel">
+        <div class="timer">⏳ <span id="timer">{{ question_timer }}</span>s</div>
+
+        <div class="leaderboard">
+            <h3>🏆 Live Room</h3>
+            <div id="leaderboardList">
+                {% for p in players %}
+                    <div class="player-row">
+                        <span>{{ p.player_name }}</span>
+                        <strong>{{ p.score }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+<script>
+const roomCode = "{{ room.room_code }}";
+const correctAnswer = "{{ question.correct_option }}";
+const isHost = "{{ is_host|yesno:'true,false' }}" === "true";
+const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+
+const socket = new WebSocket(protocol + window.location.host + "/ws/room/" + roomCode + "/");
+
+const answerCards = document.querySelectorAll(".answer-card");
+const feedbackNote = document.getElementById("feedbackNote");
+const playerScoreEl = document.getElementById("playerScore");
+const leaderboardList = document.getElementById("leaderboardList");
+
+function renderLeaderboard(players){
+    leaderboardList.innerHTML = players.map(p => `
+        <div class="player-row">
+            <span>${p.name}</span>
+            <strong>${p.score}</strong>
+        </div>
+    `).join("");
+}
+
+socket.onmessage = function(event){
+    const data = JSON.parse(event.data);
+
+    if(data.type === "stats_shown"){
+        window.location.href = "/multiplayer/stats/" + roomCode + "/";
+    }
+
+    if(data.type === "question_advanced"){
+        window.location.href = "/multiplayer/game/" + roomCode + "/";
+    }
+
+    if(data.type === "game_finished"){
+        window.location.href = "/multiplayer/result/" + roomCode + "/";
+    }
+
+    if(data.type === "leaderboard_updated"){
+        renderLeaderboard(data.players);
+    }
+};
+
+function getCookie(name){
+    let cookieValue = null;
+    if(document.cookie && document.cookie !== ''){
+        const cookies = document.cookie.split(';');
+        for(let i = 0; i < cookies.length; i++){
+            const cookie = cookies[i].trim();
+            if(cookie.substring(0, name.length + 1) === (name + '=')){
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+let hasAnswered = false;
+let timerTriggered = false;
+
+async function submitAnswer(option){
+    const formData = new FormData();
+    formData.append("selected_option", option);
+
+    const response = await fetch("/multiplayer/game/" + roomCode + "/answer/", {
+        method: "POST",
+        headers: {"X-CSRFToken": csrftoken},
+        body: formData
+    });
+
+    return await response.json();
+}
+
+answerCards.forEach(card => {
+    card.onclick = async function(){
+        if(hasAnswered) return;
+
+        hasAnswered = true;
+        const selected = this.dataset.option;
+
+        answerCards.forEach(b => b.disabled = true);
+
+        const result = await submitAnswer(selected);
+
+        if(result.correct){
+            this.classList.add("correct");
+            feedbackNote.textContent = "Correct!";
+        } else {
+            this.classList.add("wrong");
+            answerCards.forEach(btn => {
+                if(btn.dataset.option === String(result.correct_option)){
+                    btn.classList.add("correct");
+                }
+            });
+            feedbackNote.textContent = "Wrong answer";
+        }
+
+        if(result.score !== undefined){
+            playerScoreEl.textContent = result.score;
+        }
+
+        if(result.players){
+            renderLeaderboard(result.players);
+            socket.send(JSON.stringify({
+                type: "leaderboard_update",
+                players: result.players
+            }));
+        }
+    };
+});
+
+let time = {{ question_timer }};
+const timer = document.getElementById("timer");
+
+const countdown = setInterval(() => {
+    time--;
+    timer.textContent = time;
+
+    if(time <= 0 && !timerTriggered){
+        timerTriggered = true;
+        clearInterval(countdown);
+
+        if(!hasAnswered){
+            answerCards.forEach(btn => {
+                btn.disabled = true;
+                if(btn.dataset.option === String(correctAnswer)){
+                    btn.classList.add("correct");
+                }
+            });
+            feedbackNote.textContent = "Time is up!";
+        }
+
+        setTimeout(() => {
+            if(isHost){
+                socket.send(JSON.stringify({type: "show_stats"}));
+            }
+        }, 2000);
+    }
+}, 1000);
+</script>
+
+</body>
+</html>

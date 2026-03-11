@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Answer Statistics</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background: radial-gradient(circle at top,#1d3557 0%,#0b132b 45%,#050814 100%);
+    min-height:100vh;
+    color:white;
+}
+.page-wrap{
+    padding:30px;
+}
+.stats-card{
+    max-width:1000px;
+    margin:auto;
+    background:rgba(255,255,255,0.05);
+    border-radius:24px;
+    padding:30px;
+}
+.title{
+    text-align:center;
+    font-size:2rem;
+    font-weight:700;
+    margin-bottom:10px;
+}
+.subtitle{
+    text-align:center;
+    opacity:0.85;
+    margin-bottom:24px;
+}
+.question-box{
+    background:rgba(255,255,255,0.07);
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:24px;
+    font-size:1.2rem;
+    font-weight:600;
+}
+.stats-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+}
+.stat-card{
+    background:rgba(255,255,255,0.06);
+    border-radius:16px;
+    padding:20px;
+}
+.stat-label{
+    font-weight:700;
+    margin-bottom:8px;
+}
+.stat-value{
+    font-size:2rem;
+    font-weight:800;
+    color:#f4b400;
+}
+.summary{
+    margin-top:24px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+}
+.summary-card{
+    background:rgba(255,255,255,0.06);
+    border-radius:16px;
+    padding:18px;
+    text-align:center;
+}
+.big{
+    font-size:2rem;
+    font-weight:800;
+}
+.correct{color:#2ecc71;}
+.wrong{color:#e74c3c;}
+.note{
+    text-align:center;
+    margin-top:24px;
+    opacity:0.82;
+}
+@media (max-width:768px){
+    .stats-grid,.summary{
+        grid-template-columns:1fr;
+    }
+    .page-wrap{
+        padding:18px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+<div class="stats-card">
+    <div class="title">📊 Answer Statistics</div>
+    <div class="subtitle">Question {{ current_number }} of {{ total_questions }}</div>
+
+    <div class="question-box">
+        {{ question.text }}
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">A selected</div>
+            <div class="stat-value">{{ option1_count }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">B selected</div>
+            <div class="stat-value">{{ option2_count }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">C selected</div>
+            <div class="stat-value">{{ option3_count }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">D selected</div>
+            <div class="stat-value">{{ option4_count }}</div>
+        </div>
+    </div>
+
+    <div class="summary">
+        <div class="summary-card">
+            <div>Correct Answers</div>
+            <div class="big correct">{{ correct_count }}</div>
+        </div>
+
+        <div class="summary-card">
+            <div>Wrong Answers</div>
+            <div class="big wrong">{{ wrong_count }}</div>
+        </div>
+    </div>
+
+    <div class="note">Showing leaderboard next...</div>
+</div>
+</div>
+
+<script>
+const roomCode = "{{ room.room_code }}";
+const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+const isHost = "{{ is_host|yesno:'true,false' }}" === "true";
+
+const socket = new WebSocket(
+    protocol + window.location.host + "/ws/room/" + roomCode + "/"
+);
+
+socket.onmessage = function(event){
+    const data = JSON.parse(event.data);
+
+    if(data.type === "round_leaderboard_shown"){
+        window.location.href = "/multiplayer/round-leaderboard/" + roomCode + "/";
+    }
+
+    if(data.type === "question_advanced"){
+        window.location.href = "/multiplayer/game/" + roomCode + "/";
+    }
+
+    if(data.type === "game_finished"){
+        window.location.href = "/multiplayer/result/" + roomCode + "/";
+    }
+};
+
+setTimeout(() => {
+    if(isHost){
+        socket.send(JSON.stringify({type: "show_round_leaderboard"}));
+    }
+}, 4000);
+</script>
+
+</body>
+</html>

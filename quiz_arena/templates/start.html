@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Quiz</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top, #1d3557 0%, #0b132b 45%, #050814 100%);
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 20px 0;
+        }
+
+        .start-card {
+            width: 100%;
+            max-width: 760px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 36px 26px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.85;
+            font-size: 0.95rem;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+            color: white;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 28px;
+            font-size: 1rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 16px;
+            min-height: 56px;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.95);
+            color: #111;
+            font-size: 1rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            box-shadow: 0 0 0 0.2rem rgba(244, 180, 0, 0.2);
+            border-color: rgba(244, 180, 0, 0.45);
+        }
+
+        .category-note {
+            margin-top: 10px;
+            font-size: 0.92rem;
+            color: rgba(255,255,255,0.72);
+        }
+
+        .play-btn {
+            background: #f4b400;
+            color: #111;
+            border: none;
+            font-weight: 700;
+            border-radius: 16px;
+            padding: 15px 24px;
+            width: 100%;
+            transition: 0.3s ease;
+            box-shadow: 0 10px 20px rgba(244, 180, 0, 0.22);
+        }
+
+        .play-btn:hover {
+            background: #ffd24d;
+            transform: translateY(-1px);
+            color: #111;
+        }
+
+        .mini-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .mini-tags span {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.92);
+        }
+
+        @media (max-width: 768px) {
+            .start-card {
+                margin: 16px;
+                padding: 28px 18px;
+                border-radius: 22px;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 0.95rem;
+            }
+
+            .form-control,
+            .form-select {
+                min-height: 52px;
+                font-size: 0.96rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="start-card mx-auto">
+        <a href="/" class="back-link">← Back Home</a>
+
+        <div class="text-center mt-3">
+            <h1 class="title">Start Quiz</h1>
+            <p class="subtitle">Enter your details and choose a category to begin your challenge.</p>
+        </div>
+
+        <form method="POST" class="mt-4">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">Enter Your Name</label>
+                <div class="input-wrap">
+                    <input type="text" name="player_name" class="form-control" placeholder="e.g. Wunmi" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Select Category</label>
+                <select name="category" class="form-select" required>
+                    {% for category in categories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+                <p class="category-note">Choose a category and get 20 randomized questions.</p>
+            </div>
+
+            <button type="submit" class="play-btn">Start Quiz</button>
+        </form>
+
+        <div class="mini-tags">
+            {% for category in categories %}
+                <span>{{ category }}</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
