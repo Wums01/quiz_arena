@@ -18,5 +18,18 @@ def main():
     execute_from_command_line(sys.argv)
 
 
+if os.environ.get("CREATE_SUPERUSER") == "True":
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    username = "wums"
+    email = "obebe.elizabeth@gmail.com"
+    password = "QuizArenaAdmin123"
+
+    if not User.objects.filter(username=username).exists():
+        print("Creating superuser...")
+        User.objects.create_superuser(username, email, password)
+
+
 if __name__ == '__main__':
     main()
