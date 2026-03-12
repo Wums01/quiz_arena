@@ -4,6 +4,6 @@ pip install -r requirements.txt
 
 python manage.py migrate
 
-python manage.py loaddata questions.json || true
+python manage.py loaddata questions.json
 
 python manage.py collectstatic --noinput
