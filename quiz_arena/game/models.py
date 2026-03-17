@@ -48,6 +48,7 @@ class GameRoom(models.Model):
     host_name = models.CharField(max_length=100)
     category = models.CharField(max_length=50)
     current_question = models.IntegerField(default=0)
+    is_started = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

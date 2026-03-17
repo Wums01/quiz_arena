@@ -62,6 +62,11 @@
             margin-top: 12px;
         }
 
+        .start-btn:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
         .players-box {
             margin-top: 28px;
             text-align: left;
@@ -83,6 +88,7 @@
             display: flex;
             justify-content: space-between;
             gap: 12px;
+            animation: fadeIn 0.35s ease;
         }
 
         .player-row:last-child {
@@ -99,6 +105,28 @@
             margin-top: 16px;
             color: rgba(255,255,255,0.82);
         }
+
+        .join-alert {
+            display: none;
+            margin-top: 14px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: rgba(76, 175, 80, 0.18);
+            color: #d7ffd9;
+            font-weight: 600;
+            animation: fadeIn 0.35s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -106,6 +134,8 @@
     <h1>Room Lobby</h1>
     <p>Room Code</p>
     <div class="room-code">{{ room.room_code }}</div>
+
+    <p><strong>Players in Room:</strong> <span id="playerCount">{{ player_count }}</span></p>
 
     <p><strong>Host:</strong> {{ room.host_name }}</p>
     <p><strong>Category:</strong> {{ room.category }}</p>
@@ -116,6 +146,8 @@
     {% else %}
         <p class="waiting-note">Waiting for host to start the game...</p>
     {% endif %}
+
+    <div id="joinAlert" class="join-alert">A player joined the room</div>
 
     <div class="players-box">
         <div class="players-title">👥 Players in Room</div>
@@ -144,8 +176,15 @@
     );
 
     const playersList = document.getElementById("playersList");
+    const playerCount = document.getElementById("playerCount");
+    const joinAlert = document.getElementById("joinAlert");
+    let lastPlayerCount = {{ player_count }};
 
     function renderPlayers(players, hostName) {
+        if (playerCount) {
+            playerCount.textContent = players.length;
+        }
+
         if (!players || players.length === 0) {
             playersList.innerHTML = "<p>No players yet.</p>";
             return;
@@ -158,6 +197,23 @@
             </div>
         `).join("");
     }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
 
     socket.onopen = function() {
         const players = [
@@ -180,17 +236,45 @@
         }
 
         if (data.type === "players_updated") {
+            const newCount = data.players.length;
+
+            if (newCount > lastPlayerCount && joinAlert) {
+                const latestPlayer = data.players[data.players.length - 1];
+                joinAlert.textContent = `${latestPlayer.name} joined the room`;
+                joinAlert.style.display = "block";
+
+                setTimeout(() => {
+                    joinAlert.style.display = "none";
+                }, 2000);
+            }
+
+            lastPlayerCount = newCount;
             renderPlayers(data.players, "{{ room.host_name }}");
         }
+    };
+
+    socket.onclose = function() {
+        console.log("Room socket disconnected");
     };
 
     const startBtn = document.getElementById("startGameBtn");
 
     if (startBtn) {
-        startBtn.onclick = function() {
-            socket.send(JSON.stringify({
-                type: "start_game"
-            }));
+        startBtn.onclick = async function() {
+            const response = await fetch("/multiplayer/start/" + roomCode + "/", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": csrftoken
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                socket.send(JSON.stringify({
+                    type: "start_game"
+                }));
+            }
         };
     }
 </script>

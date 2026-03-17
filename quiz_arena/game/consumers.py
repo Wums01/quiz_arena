@@ -1,5 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
+from .models import GameRoom, MultiplayerPlayer
 
 
 class RoomConsumer(AsyncWebsocketConsumer):
@@ -13,6 +15,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
+
+        players = await self.get_room_players()
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "players_updated_event",
+                "players": players
+            }
+        )
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
@@ -64,11 +75,12 @@ class RoomConsumer(AsyncWebsocketConsumer):
             )
 
         elif message_type == "players_update":
+            players = await self.get_room_players()
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     "type": "players_updated_event",
-                    "players": data.get("players", [])
+                    "players": players
                 }
             )
 
@@ -98,3 +110,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
             "type": "players_updated",
             "players": event["players"]
         }))
+
+    @database_sync_to_async
+    def get_room_players(self):
+        room = GameRoom.objects.get(room_code=self.room_code)
+        players = MultiplayerPlayer.objects.filter(room=room).order_by("joined_at")
+        return [
+            {
+                "name": player.player_name,
+                "score": player.score,
+            }
+            for player in players
+        ]

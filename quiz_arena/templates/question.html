@@ -256,7 +256,11 @@
                 <div class="timer-box">
                     ⏱ Time left: <span id="timer" class="timer-number">{{ question_timer }}</span>s
                 </div>
-            </div>
+
+          <div class="progress mt-3" style="height: 8px;">
+              <div id="timerBar" class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div>
+           </div>
+        </div>
 
             <div class="progress-wrap">
                 <p class="question-count">Question {{ current }} of {{ total }}</p>
@@ -312,31 +316,36 @@
 
 <script>
     const correctAnswer = "{{ question.correct_option }}";
-    const optionButtons = document.querySelectorAll(".option-btn");
-    const answerInput = document.getElementById("answerInput");
-    const quizForm = document.getElementById("quizForm");
-    const timerElement = document.getElementById("timer");
+const optionButtons = document.querySelectorAll(".option-btn");
+const answerInput = document.getElementById("answerInput");
+const quizForm = document.getElementById("quizForm");
+const timerElement = document.getElementById("timer");
+const timerBar = document.getElementById("timerBar");
 
-    let timeLeft = {{ question_timer }};
-    let answered = false;
+let timeLeft = {{ question_timer }};
+let answered = false;
+const totalTime = {{ question_timer }};
 
-    const countdown = setInterval(() => {
-        timeLeft--;
-        timerElement.textContent = timeLeft;
+const countdown = setInterval(() => {
+    timeLeft--;
+    timerElement.textContent = timeLeft;
 
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
+    const progressPercent = (timeLeft / totalTime) * 100;
+    timerBar.style.width = progressPercent + "%";
 
-            if (!answered) {
-                answered = true;
-                disableOptions();
-                setTimeout(() => {
-                    quizForm.submit();
-                }, 500);
-            }
+    if (timeLeft <= 0) {
+        clearInterval(countdown);
+
+        if (!answered) {
+            answered = true;
+            disableOptions();
+            setTimeout(() => {
+                quizForm.submit();
+            }, 500);
         }
-    }, 1000);
-
+    }
+}, 1000);
+    
     function disableOptions() {
         optionButtons.forEach(button => {
             button.disabled = true;

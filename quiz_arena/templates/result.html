@@ -173,12 +173,26 @@
             <p class="score-note">Keep playing and beat your best score.</p>
         </div>
 
+        {% if rank %}
+<p class="text-center mt-3 fs-5">
+    🏅 Your Rank: <strong>#{{ rank }}</strong>
+</p>
+{% endif %}
+
         <div class="action-group">
             <a href="/" class="action-btn play-btn">Play Again</a>
             <a href="/leaderboard/" class="action-btn leaderboard-btn">Leaderboard</a>
         </div>
     </div>
+
+        <div 
+           class="text-center mt-4 d-flex    justify-content-center gap-3 flex-wrap">
+            <a href="{% url 'start' %}" class="btn btn-warning btn-lg">Play Again</a>
+            <a href="{% url 'leaderboard' %}" class="btn btn-outline-light btn-lg">View Leaderboard</a>
+      </div>
+
 </div>
+
 
 </body>
 </html>

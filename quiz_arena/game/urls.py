@@ -23,4 +23,5 @@ urlpatterns = [
     views.multiplayer_round_leaderboard,
     name='multiplayer_round_leaderboard'),
     path('multiplayer/result/<str:room_code>/', views.multiplayer_result, name='multiplayer_result'),
+    path('multiplayer/start/<str:room_code>/', views.start_multiplayer_game, name='start_multiplayer_game'),
 ]

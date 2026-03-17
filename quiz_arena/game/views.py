@@ -11,6 +11,7 @@ import random
 import string
 
 
+
 def get_category_timer(category):
     timers = {
         "Bible": 12,
@@ -103,16 +104,30 @@ def result_view(request):
         )
         request.session["result_saved"] = True
 
+    all_results = list(Result.objects.order_by("-score", "created_at"))
+    rank = None
+
+    for index, result in enumerate(all_results, start=1):
+        if (
+            result.player_name == player_name
+            and result.score == score
+            and result.category == category
+        ):
+            rank = index
+            break
+
     return render(request, "result.html", {
         "score": score,
         "total": total,
         "player_name": player_name,
-        "category": category
+        "category": category,
+        "rank": rank,
     })
 
 
 def leaderboard_view(request):
-    results = Result.objects.order_by("-score")[:10]
+    results = Result.objects.order_by("-score", "created_at")[:10]
+    total_players = Result.objects.values("player_name").distinct().count()
     return render(request, "leaderboard.html", {
         "results": results
     })
@@ -180,21 +195,27 @@ def join_room(request):
 
 def room_lobby(request, room_code):
     room = GameRoom.objects.get(room_code=room_code)
+    if room.is_started:
+       return redirect("multiplayer_game", room_code=room.room_code)
     player_name = request.session.get("player_name", room.host_name)
     is_host = player_name == room.host_name
     players = MultiplayerPlayer.objects.filter(room=room).order_by("joined_at")
+    player_count = players.count()
 
     return render(request, "room_lobby.html", {
         "room": room,
         "player_name": player_name,
         "is_host": is_host,
-        "players": players
+        "players": players,
+        "player_count": player_count,
     })
 
 
 def multiplayer_game(request, room_code):
     room = GameRoom.objects.get(room_code=room_code)
-    questions = list(Question.objects.filter(category=room.category)[:20])
+    questions = list(Question.objects.filter(category=room.category))
+    random.shuffle(questions)
+    questions = questions[:20]
 
     player_name = request.session.get("player_name")
     is_host = player_name == room.host_name
@@ -238,6 +259,19 @@ def multiplayer_game(request, room_code):
     })
 
 
+def start_multiplayer_game(request, room_code):
+    room = GameRoom.objects.get(room_code=room_code)
+
+    player_name = request.session.get("player_name")
+    if player_name != room.host_name:
+        return JsonResponse({"error": "Only host can start the game"}, status=403)
+
+    room.is_started = True
+    room.save()
+
+    return JsonResponse({"success": True})
+
+    
 def submit_multiplayer_answer(request, room_code):
     if request.method != "POST":
         return JsonResponse({"error": "Invalid request method"}, status=405)
