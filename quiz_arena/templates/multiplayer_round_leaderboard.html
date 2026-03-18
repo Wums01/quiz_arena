@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Round Leaderboard</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 body{
     margin:0;
@@ -13,72 +15,137 @@ body{
     min-height:100vh;
     color:white;
 }
+
 .page-wrap{
     padding:30px;
 }
+
 .board-card{
     max-width:900px;
     margin:auto;
     background:rgba(255,255,255,0.05);
     border-radius:24px;
     padding:30px;
+    animation: fadeIn 0.6s ease;
 }
+
 .title{
     text-align:center;
-    font-size:2.1rem;
+    font-size:2.2rem;
     font-weight:800;
     margin-bottom:8px;
 }
+
 .subtitle{
     text-align:center;
     opacity:0.85;
     margin-bottom:25px;
 }
+
 .top-three{
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
     gap:18px;
     margin-bottom:24px;
 }
+
 .top-card{
     background:rgba(255,255,255,0.06);
     border-radius:18px;
     padding:22px;
     text-align:center;
+    transform: translateY(40px) scale(0.95);
+    opacity:0;
+    animation: popIn 0.5s ease forwards;
 }
+
+.top-card:nth-child(1){animation-delay:0.2s;}
+.top-card:nth-child(2){animation-delay:0.35s;}
+.top-card:nth-child(3){animation-delay:0.5s;}
+
+.top-card.winner{
+    box-shadow:0 0 25px rgba(255,215,0,0.6);
+    transform: scale(1.05);
+}
+
 .rank{
-    font-size:2rem;
+    font-size:2.2rem;
     margin-bottom:10px;
 }
+
 .name{
     font-size:1.1rem;
     font-weight:700;
 }
+
 .score{
-    font-size:2rem;
+    font-size:2.2rem;
     font-weight:800;
     color:#f4b400;
     margin-top:8px;
+    animation: pulse 1.5s infinite;
 }
+
 .rest-list{
     background:rgba(255,255,255,0.06);
     border-radius:18px;
     padding:18px;
 }
+
 .player-row{
     display:flex;
     justify-content:space-between;
     padding:12px 0;
     border-bottom:1px solid rgba(255,255,255,0.06);
+    transform: translateX(-30px);
+    opacity:0;
+    animation: slideIn 0.4s ease forwards;
 }
+
+.player-row:nth-child(1){animation-delay:0.3s;}
+.player-row:nth-child(2){animation-delay:0.4s;}
+.player-row:nth-child(3){animation-delay:0.5s;}
+.player-row:nth-child(4){animation-delay:0.6s;}
+.player-row:nth-child(5){animation-delay:0.7s;}
+
 .player-row:last-child{
     border-bottom:none;
 }
+
 .note{
     text-align:center;
     margin-top:24px;
     opacity:0.82;
+    font-size:0.95rem;
 }
+
+/* Animations */
+
+@keyframes fadeIn{
+    from{opacity:0;}
+    to{opacity:1;}
+}
+
+@keyframes popIn{
+    to{
+        transform: translateY(0) scale(1);
+        opacity:1;
+    }
+}
+
+@keyframes slideIn{
+    to{
+        transform: translateX(0);
+        opacity:1;
+    }
+}
+
+@keyframes pulse{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.08);}
+    100%{transform:scale(1);}
+}
+
 @media (max-width:768px){
     .top-three{
         grid-template-columns:1fr;
@@ -89,16 +156,18 @@ body{
 }
 </style>
 </head>
+
 <body>
 
 <div class="page-wrap">
 <div class="board-card">
+
     <div class="title">🏆 Round Leaderboard</div>
     <div class="subtitle">After Question {{ current_number }} of {{ total_questions }}</div>
 
     <div class="top-three">
         {% for p in players|slice:":3" %}
-            <div class="top-card">
+            <div class="top-card {% if forloop.counter == 1 %}winner{% endif %}">
                 <div class="rank">
                     {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% else %}🥉{% endif %}
                 </div>
@@ -122,6 +191,7 @@ body{
     {% endif %}
 
     <div class="note">Moving to next question...</div>
+
 </div>
 </div>
 

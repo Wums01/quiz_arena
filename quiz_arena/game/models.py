@@ -43,12 +43,15 @@ class Result(models.Model):
         return f"{self.player_name} - {self.score}/{self.total_questions}"
 
 
+from django.db import models
+
 class GameRoom(models.Model):
     room_code = models.CharField(max_length=8, unique=True)
     host_name = models.CharField(max_length=100)
     category = models.CharField(max_length=50)
     current_question = models.IntegerField(default=0)
     is_started = models.BooleanField(default=False)
+    question_ids = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

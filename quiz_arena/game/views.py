@@ -11,6 +11,19 @@ import random
 import string
 
 
+def get_room_questions(room):
+    question_ids = room.question_ids or []
+
+    if not question_ids:
+        return []
+
+    questions = Question.objects.filter(id__in=question_ids)
+    questions_dict = {q.id: q for q in questions}
+
+    ordered_questions = [questions_dict[qid] for qid in question_ids if qid in questions_dict]
+
+    return ordered_questions
+
 
 def get_category_timer(category):
     timers = {
@@ -124,19 +137,23 @@ def result_view(request):
         "rank": rank,
     })
 
-
 def leaderboard_view(request):
     results = Result.objects.order_by("-score", "created_at")[:10]
     total_players = Result.objects.values("player_name").distinct().count()
     return render(request, "leaderboard.html", {
-        "results": results
+        "results": results,
+        "total_players": total_players,
     })
+
+
 
 
 # ---------------- MULTIPLAYER MODE ----------------
 
 def multiplayer_home(request):
     return render(request, "multiplayer_home.html")
+
+
 
 
 def create_room(request):
@@ -149,11 +166,18 @@ def create_room(request):
         while GameRoom.objects.filter(room_code=room_code).exists():
             room_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
+        # ✅ SELECT QUESTIONS ONCE
+        questions = list(Question.objects.filter(category=category))
+        random.shuffle(questions)
+        selected_questions = questions[:20]
+        question_ids = [q.id for q in selected_questions]
+
         room = GameRoom.objects.create(
             room_code=room_code,
             host_name=host_name,
             category=category,
-            current_question=0
+            current_question=0,
+            question_ids=question_ids  # ✅ SAVE THEM
         )
 
         request.session["player_name"] = host_name
@@ -167,7 +191,6 @@ def create_room(request):
 
     categories = Question.objects.values_list('category', flat=True).distinct()
     return render(request, "create_room.html", {"categories": categories})
-
 
 def join_room(request):
     error = None
@@ -213,10 +236,7 @@ def room_lobby(request, room_code):
 
 def multiplayer_game(request, room_code):
     room = GameRoom.objects.get(room_code=room_code)
-    questions = list(Question.objects.filter(category=room.category))
-    random.shuffle(questions)
-    questions = questions[:20]
-
+    questions = get_room_questions(room)
     player_name = request.session.get("player_name")
     is_host = player_name == room.host_name
 
@@ -286,7 +306,7 @@ def submit_multiplayer_answer(request, room_code):
     if not player:
         return JsonResponse({"error": "Player not found in room"}, status=404)
 
-    questions = list(Question.objects.filter(category=room.category)[:20])
+    questions = get_room_questions(room)
     if not questions:
         return JsonResponse({"error": "No questions found"}, status=404)
 
@@ -354,7 +374,7 @@ def submit_multiplayer_answer(request, room_code):
 def multiplayer_stats(request, room_code):
     room = GameRoom.objects.get(room_code=room_code)
 
-    questions = list(Question.objects.filter(category=room.category)[:20])
+    questions = get_room_questions(room)
     total_questions = len(questions)
 
     if total_questions == 0:
@@ -401,9 +421,9 @@ def next_multiplayer_question(request, room_code):
     if player_name != room.host_name:
         return JsonResponse({"error": "Only host can move to next question"}, status=403)
 
-    total_questions = Question.objects.filter(category=room.category)[:20].count()
+    total_questions = len(room.question_ids or [])
 
-    if room.current_question < total_questions:
+    if room.current_question < total_questions - 1:
         room.current_question += 1
         room.save()
 
@@ -420,7 +440,7 @@ def multiplayer_round_leaderboard(request, room_code):
     room = GameRoom.objects.get(room_code=room_code)
     players = MultiplayerPlayer.objects.filter(room=room).order_by("-score", "player_name")
 
-    total_questions = Question.objects.filter(category=room.category)[:20].count()
+    total_questions = len(room.question_ids or [])
     current_number = room.current_question + 1
 
     if current_number > total_questions:
@@ -442,7 +462,7 @@ def multiplayer_result(request, room_code):
     players = MultiplayerPlayer.objects.filter(room=room).order_by("-score", "player_name")
     my_player = players.filter(player_name=player_name).first()
 
-    total_questions = Question.objects.filter(category=room.category)[:20].count()
+    total_questions = len(room.question_ids or [])
     my_score = my_player.score if my_player else 0
 
     return render(request, "multiplayer_result.html", {
