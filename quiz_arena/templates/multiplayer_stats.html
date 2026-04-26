@@ -145,6 +145,8 @@ body{
 
 <script>
 const roomCode = "{{ room.room_code }}";
+const currentNumber = {{ current_number|default:0 }};
+const totalQuestions = {{ total_questions|default:0 }};
 const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
 const isHost = "{{ is_host|yesno:'true,false' }}" === "true";
 
@@ -159,19 +161,23 @@ socket.onmessage = function(event){
         window.location.href = "/multiplayer/round-leaderboard/" + roomCode + "/";
     }
 
-    if(data.type === "question_advanced"){
-        window.location.href = "/multiplayer/game/" + roomCode + "/";
-    }
-
     if(data.type === "game_finished"){
         window.location.href = "/multiplayer/result/" + roomCode + "/";
     }
 };
 
-setTimeout(() => {
-    if(isHost){
+function moveForwardAfterStats(){
+    if(!isHost) return;
+
+    if(Number(currentNumber) >= Number(totalQuestions)){
+        socket.send(JSON.stringify({type: "finish_game"}));
+    } else {
         socket.send(JSON.stringify({type: "show_round_leaderboard"}));
     }
+}
+
+setTimeout(() => {
+    moveForwardAfterStats();
 }, 4000);
 </script>
 
