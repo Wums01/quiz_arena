@@ -7,7 +7,7 @@ pip install -r requirements.txt
 echo "=== RUNNING MIGRATIONS ==="
 python manage.py migrate
 
-echo "=== LOADING QUESTIONS FIXTURE ==="
+echo "=== LOADING QUESTIONS FIXTURE TO LIVE DATABASE ==="
 python manage.py loaddata questions.json --verbosity 2 || true
 
 echo "=== CREATING SUPERUSER IF NEEDED ==="
